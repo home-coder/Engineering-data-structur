@@ -1,0 +1,12 @@
+参见项目 git@github.com:home-coder/awled-custom.git
+
+硬件拓扑:(成员)
+
+9818_1  i2c-addr  some regs
+
+9818_2  i2c-addr  some regs
+
+逻辑需求:(方法)
+各种effect实现
+
+保守估计实现数据结构的操作需要500行代码
