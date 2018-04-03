@@ -10,3 +10,10 @@
 各种effect实现
 
 保守估计实现数据结构的操作需要500行代码
+
+//1.考虑customize.c如何定制到uboot和kernel，因为这两个阶段不需要复杂的效果，所以做成闪烁效果即可
+uboot--->在boot_f阶段，调用自定义set_awled_effect_when_power() //此刻仅仅上电，需要按下开机键才能开机
+uboot--->在boot_r阶段，调用自定义set_awled_effect_when_startup() //此刻正按下开机键
+kernel-->在开机加载ko过程中的probe流程中调用set_aw_effect_in_kernel()
+kernel-->如果时间来的及，考虑在kernel中实现各种效果case, 上层采用ioctl来调用
+         如果时间不及，则仍按照原来的完全在用户空间实现各种效果

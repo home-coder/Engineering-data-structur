@@ -238,7 +238,7 @@ static void show_regmap_and_regdata(byte led_index, ledreg_data *p_ledreg_data)
 	printf("data: (0x%x, 0x%x, 0x%x)\n", r, g, b);
 }
 
-static void leddata_operate(byte led_index, byte brightness, const ledcolor_info color)
+static void led_set_bright_color(byte led_index, byte brightness, const ledcolor_info color)
 {
 	ledif_info *ledif_info_struct = NULL;
 
@@ -261,14 +261,14 @@ static void leddata_operate(byte led_index, byte brightness, const ledcolor_info
 		printf("some struct is NULL\n");
 	}
 
-	//do like send i2c etc...
+	//TODO do like send i2c etc...
 }
 
 int main()
 {
 	ledif_info_init();
 
-	leddata_operate(22, 32, led_colors[yellow]);
+	led_set_bright_color(22, 32, led_colors[yellow]);
 
 	return 0;
 }
