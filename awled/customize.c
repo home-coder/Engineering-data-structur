@@ -92,6 +92,10 @@ static const byte gamma_brightness[] = {
 	52, 54, 55, 57, 59, 61, 62, 63,
 };
 
+static const byte led_bright_level[] = {
+	0x03, 0x06, 0x0a, 0x14, 0x28, 0x3F,
+};
+
 typedef enum {
 	none = 0,
 	red,
@@ -107,7 +111,8 @@ typedef enum {
 typedef struct {
 	byte cur_idx;
 	byte bright_level;
-	LED_COLOR color_level;
+	LED_COLOR background;
+	LED_COLOR foward;
 } ledeffect_info;
 ledeffect_info *led_effect = NULL;
 
@@ -226,6 +231,11 @@ static void set_ledeffect_info(ledeffect_info * ledeffect_info_struct)
 	led_effect = ledeffect_info_struct;
 }
 
+static ledeffect_info *get_led_effect()
+{
+	return led_effect;
+}
+
 static void ledeffect_info_init()
 {
 	ledeffect_info *ledeffect_info_struct = NULL;
@@ -233,8 +243,9 @@ static void ledeffect_info_init()
 	ledeffect_info_struct = (ledeffect_info *) malloc(sizeof(ledeffect_info));
 	if (ledeffect_info_struct) {
 		ledeffect_info_struct->cur_idx = 0;
-		ledeffect_info_struct->color_level = none;
-		ledeffect_info_struct->bright_level = gamma_brightness[0];
+		ledeffect_info_struct->background = none;
+		ledeffect_info_struct->foward = none;
+		ledeffect_info_struct->bright_level = led_bright_level[0];
 		set_ledeffect_info(ledeffect_info_struct);
 	}
 
@@ -329,13 +340,47 @@ static void led_set_bright_color(byte led_index, byte brightness, const ledcolor
 	//TODO config aw981x_update_reg
 }
 
-static void led_effect_comet(LED_COLOR background, LED_COLOR foward)
+static void led_set_all_bright_color(byte led_nums, byte brightness, LED_COLOR background)
 {
+	byte i;
+	for (i = 0; i < led_nums; i++) {
+		led_set_bright_color(i, brightness, background);
+	}
+}
 
+static void effect_comet_function(byte led_nums, byte brightness, LED_COLOR background, LED_COLOR foward)
+{
+	//set all background
+	led_set_all_bright_color(led_nums, brightness, background);
+
+	//set comet
+
+	//enable
+}
+
+static void led_effect_startup()
+{
+	byte led_nums, comet_nums;
+	ledeffect_info *p_led_effect = get_led_effect();
+
+	if (NULL != p_led_effect) {
+		led_nums = get_led_nums(0) + get_led_nums(1);
+		comet_nums = sizeof(led_bright_level)/sizeof(led_bright_level[0]);
+
+		p_led_effect->background = led_colors[none];
+		p_ledcolor_info->foward = led_colors[yellow];
+		p_led_effect->cur_idx = 0;
+		p_led_effect->bright_level = led_bright_level[comet_nums - 1];//故意设置背景色比comet最大值暗一些
+
+		while (led_effect->cur_idx < led_nums - comet_nums) {
+			effect_comet_function(led_nums, p_led_effect->bright_level, p_led_effect->background, p_ledcolor_info->foward);
+			led_effect->cur_idx++;
+		}
+	}
 }
 
 /*
- *TODO change main to android-system call
+ *TODO at last, change main to android-system call
  */
 int main()
 {
@@ -345,8 +390,8 @@ int main()
 
 #ifdef LED_EFFECT_CASE
 	//TODO think individually-mode and matrix-mode, 统还是独完全参看led_default_setup()中的设置
-	led_set_bright_color(22, 32, led_colors[yellow]);
-	//aw981x_write_register(aw981x_id, aw981x_sleep_reg, aw981x_en_value);
+
+	led_effect_startup();
 #endif
 	return 0;
 }
