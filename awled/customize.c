@@ -258,6 +258,16 @@ static void aw981x_write_register(CHIP_ID chip_id, byte reg, byte data)
 	printf("id 0x%x, reg 0x%x, data 0x%x\n", chip_id, reg, data);
 }
 
+static void aw981x_enable_chip()
+{
+	byte aw981x_id;
+
+	for (aw981x_id = 0; aw981x_id < LED_CHIP_NUMS; aw981x_id++) {
+		// enable chip
+		aw981x_write_register(aw981x_id, aw981x_sleep_reg, aw981x_en_value);
+	}
+}
+
 static void led_default_setup()
 {
 	printf("%s\n", __func__);
@@ -270,10 +280,7 @@ static void led_default_setup()
 		aw981x_write_register(aw981x_id, aw981x_config_reg, aw981x_config_value);
 	}
 
-	for (aw981x_id = 0; aw981x_id < LED_CHIP_NUMS; aw981x_id++) {
-		// enable chip
-		aw981x_write_register(aw981x_id, aw981x_sleep_reg, aw981x_en_value);
-	}
+	aw981x_enable_chip();
 }
 
 static byte convert_data(byte brightness, LED_COLOR_LEVEL color)
@@ -336,7 +343,7 @@ static void led_set_bright_color(byte led_index, byte brightness, const ledcolor
 	} else if (ledif_info_struct == NULL) {
 		printf("some struct is NULL\n");
 	}
-	//TODO config aw981x_update_reg
+
 }
 
 static void led_set_all_bright_color(byte led_nums, byte brightness, const ledcolor_info background)
@@ -348,14 +355,27 @@ static void led_set_all_bright_color(byte led_nums, byte brightness, const ledco
 	}
 }
 
-static void effect_comet_function(byte led_nums, byte brightness, const ledcolor_info background,  const ledcolor_info foward)
+static void led_set_comet(byte cur_idx, const ledcolor_info foward)
+{
+	byte comet_nums, i;
+
+	comet_nums = sizeof(led_bright_level)/sizeof(led_bright_level[0]);
+	for (i = 0; i < comet_nums; i++) {
+		led_set_bright_color(cur_idx++, led_bright_level[i], foward);
+	}
+
+}
+
+static void effect_comet_function(byte led_nums, byte cur_idx, byte brightness, const ledcolor_info background,  const ledcolor_info foward)
 {
 	//set all background
 	led_set_all_bright_color(led_nums, brightness, background);
 
 	//set comet
+	led_set_comet(cur_idx, foward);
 
 	//enable
+	aw981x_enable_chip();
 }
 
 static void led_effect_startup()
@@ -373,9 +393,9 @@ static void led_effect_startup()
 		p_led_effect->cur_idx = 0;
 		p_led_effect->bright_level = led_bright_level[comet_nums - 1];//故意设置背景色比comet最大值暗一些
 
-		while (led_effect->cur_idx < led_nums - comet_nums) {
-			effect_comet_function(led_nums, p_led_effect->bright_level, p_led_effect->background, p_led_effect->foward);
-			led_effect->cur_idx++;
+		while (p_led_effect->cur_idx < led_nums - comet_nums) {
+			effect_comet_function(led_nums, p_led_effect->cur_idx, p_led_effect->bright_level, p_led_effect->background, p_led_effect->foward);
+			p_led_effect->cur_idx++;
 		}
 	}
 }
